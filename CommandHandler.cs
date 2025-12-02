@@ -2,6 +2,9 @@ using System;
 using Sys = Cosmos.System;
 using Cosmos.System.FileSystem.Listing;
 using Cosmos.System.FileSystem;
+using System.Collections.Generic;  // for Stack<T>
+using System.Linq;                 // for Reverse()
+
 
 namespace gotailsOS
 {
@@ -102,7 +105,6 @@ namespace gotailsOS
             Console.WriteLine("  touch <file>   - Create file");
             Console.WriteLine("  rm <file/dir>  - Delete file or directory");
             Console.WriteLine("  fdisk <drive>  - Open a partition manager");
-            Console.WriteLine(Resolve("0:\\"));
         }
 
         //-------------------------------------------------------------------------------------------------------
@@ -132,23 +134,125 @@ namespace gotailsOS
             if (string.IsNullOrWhiteSpace(path))
                 return CurrentDirectory;
 
-            if (path.Contains(":\\")) // absolute drive path
-                return path.EndsWith("\\") ? path : path + "\\";
+            string fullPath;
 
-            if (path.StartsWith("\\")) // absolute on current drive
+            // Absolute drive path: 0:\, 1:\, etc.
+            if (path.Length >= 3 && path[1] == ':' && path[2] == '\\')
+            {
+                fullPath = path;
+            }
+            // Absolute on current drive: \folder\file
+            else if (path.StartsWith("\\"))
             {
                 string drive = CurrentDirectory.Split(':')[0];
-                return $"{drive}:{path}";
+                fullPath = drive + ":" + path;
+            }
+            // Relative path
+            else
+            {
+                fullPath = CurrentDirectory;
+                if (!fullPath.EndsWith("\\"))
+                    fullPath += "\\";
+                fullPath += path;
             }
 
-            // relative
-            return CurrentDirectory + path;
-        }
+            // Normalize . and ..
+            var segments = fullPath.Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
+            var stack = new Stack<string>();
 
+            // Keep the drive letter as first element
+            stack.Push(segments[0]);
+
+            for (int i = 1; i < segments.Length; i++)
+            {
+                if (segments[i] == ".")
+                {
+                    // Current directory → do nothing
+                    continue;
+                }
+                else if (segments[i] == "..")
+                {
+                    // Parent directory → pop last if not the drive
+                    if (stack.Count > 1)
+                        stack.Pop();
+                }
+                else
+                {
+                    stack.Push(segments[i]);
+                }
+            }
+
+            // Rebuild path with trailing \
+            var normalizedSegments = stack.Reverse().ToArray();
+            string normalized = string.Join("\\", normalizedSegments) + "\\";
+
+            return normalized;
+        }
 
         //-------------------------------------------------------------------------------------------------------
         // COMMANDS
         //-------------------------------------------------------------------------------------------------------
+        private static string NormalizePath(string path, string currentDirectory)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return currentDirectory;
+
+            // Convert user input / to \
+            path = path.Replace('/', '\\').Trim();
+
+            string fullPath;
+
+            // Absolute drive path: 0:\ or C:\ etc.
+            if (path.Length >= 3 && path[1] == ':' && path[2] == '\\')
+            {
+                fullPath = path;
+            }
+            else if (path.StartsWith("\\")) // absolute on current drive
+            {
+                string drive = currentDirectory.Split(':')[0];
+                fullPath = drive + ":" + path;
+            }
+            else
+            {
+                // Relative path
+                fullPath = currentDirectory;
+                if (!fullPath.EndsWith("\\"))
+                    fullPath += "\\";
+                fullPath += path;
+            }
+
+            // Split into segments
+            var segments = fullPath.Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
+            var stack = new Stack<string>();
+
+            // Keep the drive as first element (e.g. 0:)
+            stack.Push(segments[0]);
+
+            for (int i = 1; i < segments.Length; i++)
+            {
+                if (segments[i] == ".")
+                {
+                    // Current directory → do nothing
+                    continue;
+                }
+                else if (segments[i] == "..")
+                {
+                    // Parent directory → pop last if not the drive
+                    if (stack.Count > 1)
+                        stack.Pop();
+                }
+                else
+                {
+                    stack.Push(segments[i]);
+                }
+            }
+
+            // Rebuild path
+            var normalizedSegments = stack.Reverse().ToArray();
+            string normalized = string.Join("\\", normalizedSegments) + "\\"; // keep trailing \
+
+            return normalized;
+        }
 
         private static void CmdCD(string[] args, CosmosVFS vfs)
         {
@@ -159,7 +263,7 @@ namespace gotailsOS
             }
 
             string target = Resolve(args[0]);
-
+            string oldCurDir = CurrentDirectory;
             try
             {
                 var dir = vfs.GetDirectory(target);
@@ -169,6 +273,7 @@ namespace gotailsOS
             catch
             {
                 Console.WriteLine("cd: no such directory");
+                CurrentDirectory = oldCurDir;
             }
         }
 
