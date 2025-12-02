@@ -13,32 +13,32 @@ using Cosmos.HAL.BlockDevice;
 // 0x06 - File Entry (append file size and terminate the size with 0xFF, then append the file data)
 
 
-namespace testOS.Filesystem {
+namespace testOS.FileSystem {
     // This file was coded without the help of a LLM. The only LLM powered parts would be me being too lazy to fix syntax errors and asking it to do it for me or not knowing how to do something (but not like teling it to make a entire filesystem like i did with BadFS*). TailsFS2 will probably be AI Assisted to fix FS issues. I'm stil learning here lol.
     public class TailsFS(BlockDevice device) {
          private BlockDevice device;
          private static readonly string MAGIC = "TAILSFS1";
 
         public bool Detect() {
-            byte buffer[] = new byte[8] // make a 8 byte buffer (because thats the maximum possible size of our *magic* number i mean text
+            byte[] buffer = new byte[8]; // make a 8 byte buffer (because thats the maximum possible size of our *magic* number i mean text
             device.ReadBlock(0, 1, ref buffer); // what even IS this function the docs SUCK here LOL
             string magicNumber = Encoding.ASCII.GetString(buffer).TrimEnd('\0'); // aparantly the \0 is a null terminator but okay
-            if (magicNumber === MAGIC) {
+            if (magicNumber == MAGIC) {
                 return true;
             } else {
                 return false;
             }
         }
         public void Format() {
-            byte buffer[] = new byte[12] // make a 8 byte buffer to write the *magic* stuff
+            byte[] buffer = new byte[12]; // make a 8 byte buffer to write the *magic* stuff
             byte[] textBytes = Encoding.ASCII.GetBytes(MAGIC);
             Array.Copy(textBytes, 0, buffer, 0, textBytes.Length); // uhh i just noticed making the original buffer was pointless LOL
             // Make directory structure data
-            buffer[9] = 0x01
-            buffer[10] = 0x03 // pro tip: dont code at 1:07 AM
+            buffer[9] = 0x01;
+            buffer[10] = 0x03; // pro tip: dont code at 1:07 AM
             byte[] textBytes = Encoding.ASCII.GetBytes("/");
             Array.Copy(textBytes, 11, buffer, 11, textBytes.Length);
-            buffer[12] = 0x02
+            buffer[12] = 0x02;
             device.WriteBlock(0, 1, ref buffer);
         }
         public string[] ListDirectory(string path) {

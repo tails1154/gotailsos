@@ -19,9 +19,9 @@ namespace testOS
         private static Cursor cursor = new Cursor();
         private static string status = "";
         private static string filePath = "";
-        private static BadFS4 fsRef;
+        private static TailsFS fsRef;
 
-        private static void LoadFile(string path, BadFS4 fs)
+        private static void LoadFile(string path, TailsFS fs)
         {
             buffer = new List<StringBuilder>();
             filePath = path;
@@ -209,7 +209,7 @@ namespace testOS
             }
         }
 
-        public static void Run(BadFS4 fs, string path)
+        public static void Run(TailsFS fs, string path)
         {
             LoadFile(path, fs);
 

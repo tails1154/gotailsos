@@ -7,7 +7,7 @@ namespace testOS
 {
     public class CommandInterpreter
     {
-        private readonly Dictionary<int, BadFS4> drives;
+        private readonly Dictionary<int, TailsFS> drives;
         private readonly Kernel kernel;
         private readonly Func<int> getCurrentDrive;
         private readonly Func<string> getCurrentDir;
@@ -16,7 +16,7 @@ namespace testOS
         private readonly bool diskAvailable;
 
         public CommandInterpreter(
-            Dictionary<int, BadFS4> drives,
+            Dictionary<int, TailsFS> drives,
             Kernel kernel,
             Func<int> getCurrentDrive,
             Func<string> getCurrentDir,
@@ -50,12 +50,12 @@ namespace testOS
                     if (arg != null && kernel.TryParseDrivePath(arg, out int fDrive, out _))
                     {
                         drives[fDrive].Format();
-                        Console.WriteLine($"Formatted BadFS4 on disk {fDrive}.");
+                        Console.WriteLine($"Formatted TailsFS on disk {fDrive}.");
                     }
                     else
                     {
                         drives[getCurrentDrive()].Format();
-                        Console.WriteLine($"Formatted BadFS4 on disk {getCurrentDrive()}.");
+                        Console.WriteLine($"Formatted TailsFS on disk {getCurrentDrive()}.");
                     }
                     break;
 

@@ -8,7 +8,7 @@ def replace_in_cs_files(root_dir):
                 with open(path, "r", encoding="utf-8") as f:
                     content = f.read()
 
-                new_content = content.replace("BadFS3", "BadFS4")
+                new_content = content.replace("BadFS4", "TailsFS")
 
                 if new_content != content:
                     with open(path, "w", encoding="utf-8") as f:

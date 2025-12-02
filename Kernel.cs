@@ -11,8 +11,8 @@ namespace testOS
 {
     public class Kernel : Cosmos.System.Kernel
     {
-        // Multi-drive support: map index (0,1,2,...) to BadFS4 instance
-        private Dictionary<int, BadFS4> drives = new Dictionary<int, BadFS4>();
+        // Multi-drive support: map index (0,1,2,...) to TailsFS instance
+        private Dictionary<int, TailsFS> drives = new Dictionary<int, TailsFS>();
         private int currentDrive = 0;
         private string currentDir = "/";
         private bool diskAvailable = false;
@@ -66,12 +66,12 @@ namespace testOS
             {
                 if (device != null)
                 {
-                    var fs = new BadFS4(device);
+                    var fs = new TailsFS(device);
                     drives[idx] = fs;
                     if (fs.Detect())
-                        Console.WriteLine($"[ OK ] BadFS4 detected on disk {idx}");
+                        Console.WriteLine($"[ OK ] TailsFS detected on disk {idx}");
                     else
-                        Console.WriteLine($"[ WARN ] No BadFS4 present on disk {idx}. Type 'format {idx}:' to create.");
+                        Console.WriteLine($"[ WARN ] No TailsFS present on disk {idx}. Type 'format {idx}:' to create.");
                 }
                 idx++;
             }
