@@ -4,13 +4,13 @@ using System.Text;
 using Sys = Cosmos.System;
 using Cosmos.System.FileSystem;
 
-namespace gotailsOS.CommandHandler
+namespace gotailsOS
 {
 
-    public class CommandHandler
+    public static class CommandHandler
     {
-        public static void handleCommand(command, vfs) {
-
+        public static void handleCommand(string command, Sys.FileSystem.CosmosVFS vfs) {
+                // do nothing for now
         }
     }
 }

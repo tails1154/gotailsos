@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Text;
 using Sys = Cosmos.System;
 using Cosmos.System.FileSystem;
-using gotailsOS.CommandHandler;
+using gotailsOS;
 
 namespace gotailsOS
 {
     using Cosmos.System.FileSystem;
     public class Kernel: Sys.Kernel
     {
-
+        Sys.FileSystem.CosmosVFS vfs;
         protected override void BeforeRun()
         {
             Console.WriteLine("[ OK ] Booted");
