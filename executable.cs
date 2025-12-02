@@ -52,8 +52,8 @@ namespace testOS.Exec
             return sb.ToString();
         }
 
-        // NOTE: RunExecutable now takes a BadFS3 instance so it can call your filesystem methods
-        public static bool RunExecutable(byte[] data, BadFS3 fs)
+        // NOTE: RunExecutable now takes a BadFS4 instance so it can call your filesystem methods
+        public static bool RunExecutable(byte[] data, BadFS4 fs)
         {
             if (data == null) throw new ArgumentNullException(nameof(data));
             if (fs == null) throw new ArgumentNullException(nameof(fs));
@@ -83,7 +83,7 @@ namespace testOS.Exec
             return ExecuteBytecode(code, fs);
         }
 
-        private static bool ExecuteBytecode(byte[] code, BadFS3 fs)
+        private static bool ExecuteBytecode(byte[] code, BadFS4 fs)
         {
             int ip = 0;
 

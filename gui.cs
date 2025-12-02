@@ -1,27 +1,34 @@
 using Cosmos.System.Graphics;
 using System.Drawing;
-
-namespace MiniGfx
+namespace testOS {
+public class gui
 {
-    public static class Gfx
+    static VBECanvas canvas;
+
+    public static void BeforeRun()
     {
-        private static SVGAIICanvas canvas;
+        // Set graphics mode (example: 800x600x32)
+        canvas = new VBECanvas(new Mode(800, 600, ColorDepth.ColorDepth32));
 
-        public static void Init(SVGAIICanvas cvs)
-        {
-            canvas = cvs;
-        }
+        // Clear screen
+        canvas.Clear(Color.Black);
 
-        public static void Clear(Color c)
-        {
-            canvas.Clear(c);
-            canvas.Display();
-        }
+        // Draw a simple box
+        DrawBox(100, 100, 200, 150, Color.White);
 
-        public static void Square(int x, int y, int size, Color color)
-        {
-            canvas.DrawFilledRectangle(color, x, y, size, size);
-            canvas.Display();
-        }
+        // Display to screen
+        canvas.Display();
     }
+
+    public static void Run()
+    {
+        // Nothing needed for static drawing
+    }
+
+    private static void DrawBox(int x, int y, int w, int h, Color color)
+    {
+        // Draw rectangle outline
+        canvas.DrawRectangle(color, x, y, w, h);
+    }
+}
 }

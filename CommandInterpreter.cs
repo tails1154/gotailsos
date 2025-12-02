@@ -2,11 +2,12 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using testOS.FileSystem;
+//using testOS.gui;
 namespace testOS
 {
     public class CommandInterpreter
     {
-        private readonly Dictionary<int, BadFS3> drives;
+        private readonly Dictionary<int, BadFS4> drives;
         private readonly Kernel kernel;
         private readonly Func<int> getCurrentDrive;
         private readonly Func<string> getCurrentDir;
@@ -15,7 +16,7 @@ namespace testOS
         private readonly bool diskAvailable;
 
         public CommandInterpreter(
-            Dictionary<int, BadFS3> drives,
+            Dictionary<int, BadFS4> drives,
             Kernel kernel,
             Func<int> getCurrentDrive,
             Func<string> getCurrentDir,
@@ -49,12 +50,12 @@ namespace testOS
                     if (arg != null && kernel.TryParseDrivePath(arg, out int fDrive, out _))
                     {
                         drives[fDrive].Format();
-                        Console.WriteLine($"Formatted BadFS3 on disk {fDrive}.");
+                        Console.WriteLine($"Formatted BadFS4 on disk {fDrive}.");
                     }
                     else
                     {
                         drives[getCurrentDrive()].Format();
-                        Console.WriteLine($"Formatted BadFS3 on disk {getCurrentDrive()}.");
+                        Console.WriteLine($"Formatted BadFS4 on disk {getCurrentDrive()}.");
                     }
                     break;
 
@@ -159,6 +160,7 @@ namespace testOS
                     Console.WriteLine("Shutting down...");
                     Cosmos.HAL.Power.ACPIShutdown();
                     break;
+
                 case "edit":
                     if (!diskAvailable) { Console.WriteLine("ERR: no disk"); break; }
                     if (arg == null) { Console.WriteLine("usage: edit <file>"); break; }

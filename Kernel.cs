@@ -4,7 +4,6 @@ using System.Text;
 using Sys = Cosmos.System;
 using Cosmos.HAL.BlockDevice;
 using testOS.FileSystem;
-using MiniGfx;
 using Cosmos.System.Graphics;
 using System.Drawing;
 
@@ -12,8 +11,8 @@ namespace testOS
 {
     public class Kernel : Cosmos.System.Kernel
     {
-        // Multi-drive support: map index (0,1,2,...) to BadFS3 instance
-        private Dictionary<int, BadFS3> drives = new Dictionary<int, BadFS3>();
+        // Multi-drive support: map index (0,1,2,...) to BadFS4 instance
+        private Dictionary<int, BadFS4> drives = new Dictionary<int, BadFS4>();
         private int currentDrive = 0;
         private string currentDir = "/";
         private bool diskAvailable = false;
@@ -67,12 +66,12 @@ namespace testOS
             {
                 if (device != null)
                 {
-                    var fs = new BadFS3(device);
+                    var fs = new BadFS4(device);
                     drives[idx] = fs;
                     if (fs.Detect())
-                        Console.WriteLine($"[ OK ] BadFS3 detected on disk {idx}");
+                        Console.WriteLine($"[ OK ] BadFS4 detected on disk {idx}");
                     else
-                        Console.WriteLine($"[ WARN ] No BadFS3 present on disk {idx}. Type 'format {idx}:' to create.");
+                        Console.WriteLine($"[ WARN ] No BadFS4 present on disk {idx}. Type 'format {idx}:' to create.");
                 }
                 idx++;
             }
