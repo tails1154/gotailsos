@@ -25,7 +25,7 @@ namespace testOS.FileSystem {
 
          public bool Detect()
          {
-             byte[] block = device.NewBlockArray(1); // correct size
+             byte[] block = device.NewBlockArray(1);
              device.ReadBlock(0, 1, ref block);
 
              string magic = Encoding.ASCII.GetString(block, 0, MAGIC.Length);
@@ -47,8 +47,8 @@ namespace testOS.FileSystem {
              byte[] rootName = Encoding.ASCII.GetBytes("/");
              Array.Copy(rootName, 0, block, 10, rootName.Length);
 
-             block[11] = 0xFF;  // end name
-             block[12] = 0x02;  // end tree
+             block[11] = 0xFF;
+             block[12] = 0x02;
 
              device.WriteBlock(0, 1, ref block);
          }
