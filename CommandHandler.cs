@@ -102,18 +102,37 @@ namespace gotailsOS
             Console.WriteLine("  touch <file>   - Create file");
             Console.WriteLine("  rm <file/dir>  - Delete file or directory");
             Console.WriteLine("  fdisk <drive>  - Open a partition manager");
+            Console.WriteLine(Resolve("0:\\"));
         }
 
         //-------------------------------------------------------------------------------------------------------
         // PATH RESOLUTION
         //-------------------------------------------------------------------------------------------------------
+        private static string NormalizeInputPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return path;
+
+            return path.Replace('/', '\\');
+        }
+
+        public static string DisplayPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return path;
+
+            return path.Replace('\\', '/');
+        }
+
         private static string Resolve(string path)
         {
-            if (string.IsNullOrWhiteSpace(path)) return CurrentDirectory;
+            // Convert user-friendly "/" to proper "\" for VFS
+            path = NormalizeInputPath(path);
 
-            path = path.Replace('/', '\\');
+            if (string.IsNullOrWhiteSpace(path))
+                return CurrentDirectory;
 
-            if (path.Contains(":/")) // drive absolute
+            if (path.Contains(":\\")) // absolute drive path
                 return path.EndsWith("\\") ? path : path + "\\";
 
             if (path.StartsWith("\\")) // absolute on current drive
@@ -125,6 +144,7 @@ namespace gotailsOS
             // relative
             return CurrentDirectory + path;
         }
+
 
         //-------------------------------------------------------------------------------------------------------
         // COMMANDS
@@ -144,6 +164,7 @@ namespace gotailsOS
             {
                 var dir = vfs.GetDirectory(target);
                 CurrentDirectory = dir.mFullPath.EndsWith("\\") ? dir.mFullPath : dir.mFullPath + "\\";
+                if (CurrentDirectory == "\\") { throw new Exception("Nonexistant directory"); }
             }
             catch
             {

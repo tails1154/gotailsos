@@ -24,7 +24,7 @@ namespace gotailsOS
 
         protected override void Run()
         {
-            Console.Write("GoTailsOS " + gotailsOS.CommandHandler.CurrentDirectory + ">");
+            Console.Write("GoTailsOS " + CommandHandler.DisplayPath(CommandHandler.CurrentDirectory) + ">");
             string input = Console.ReadLine();
             CommandHandler.handleCommand(input, fs);
         }

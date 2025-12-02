@@ -76,7 +76,7 @@ namespace gotailsOS
                         DeleteAll(disk);
                         break;
                     case "f":
-                        FormatPartition(disk);
+                        FormatPartition(disk, diskIndex);
                         break;
                     case "o":
                         MountPartition(disk);
@@ -120,7 +120,7 @@ namespace gotailsOS
                 Console.WriteLine("Thats either not a valid partition, or you forgot what a number was and need to go back to PreK (joking)");
             }
         }
-        private static void FormatPartition(Disk vfs)
+        private static void FormatPartition(Disk vfs, int diskIndex)
         {
             PrintPartitionTable(vfs);
             Console.WriteLine();
@@ -131,7 +131,7 @@ namespace gotailsOS
             {
                 int partnum = int.Parse(input);
                 Console.WriteLine("Formatting");
-                vfs.FormatPartition(partnum, "FAT", true);
+                vfs.FormatPartition(partnum, "FAT32", true);
                 Console.WriteLine("Formatted!");
             }
             catch (Exception ex)
