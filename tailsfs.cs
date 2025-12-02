@@ -23,28 +23,36 @@ namespace testOS.FileSystem {
              this.device = device;
          }
 
-        public bool Detect() {
-            byte[] buffer = new byte[8]; // make a 8 byte buffer (because thats the maximum possible size of our *magic* number i mean text
-            device.ReadBlock(0, 1, ref buffer); // what even IS this function the docs SUCK here LOL
-            string magicNumber = Encoding.ASCII.GetString(buffer).TrimEnd('\0'); // aparantly the \0 is a null terminator but okay
-            if (magicNumber == MAGIC) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-        public void Format() {
-            byte[] buffer = new byte[12]; // make a 8 byte buffer to write the *magic* stuff
-            byte[] textBytes = Encoding.ASCII.GetBytes(MAGIC);
-            Array.Copy(textBytes, 0, buffer, 0, textBytes.Length); // uhh i just noticed making the original buffer was pointless LOL
-            // Make directory structure data
-            buffer[9] = 0x01;
-            buffer[10] = 0x03; // pro tip: dont code at 1:07 AM
-            byte[] textBytess = Encoding.ASCII.GetBytes("/");
-            Array.Copy(textBytess, 11, buffer, 11, textBytess.Length);
-            buffer[12] = 0x02;
-            device.WriteBlock(0, 1, ref buffer);
-        }
+         public bool Detect()
+         {
+             byte[] block = device.NewBlockArray(1); // correct size
+             device.ReadBlock(0, 1, ref block);
+
+             string magic = Encoding.ASCII.GetString(block, 0, MAGIC.Length);
+             return magic == MAGIC;
+         }
+
+         public void Format()
+         {
+             byte[] block = device.NewBlockArray(1);
+
+             // Write magic string
+             byte[] magicBytes = Encoding.ASCII.GetBytes(MAGIC);
+             Array.Copy(magicBytes, 0, block, 0, magicBytes.Length);
+
+             // Start directory tree
+             block[8] = 0x01;
+             block[9] = 0x03;
+
+             byte[] rootName = Encoding.ASCII.GetBytes("/");
+             Array.Copy(rootName, 0, block, 10, rootName.Length);
+
+             block[11] = 0xFF;  // end name
+             block[12] = 0x02;  // end tree
+
+             device.WriteBlock(0, 1, ref block);
+         }
+
         public string[] ListDirectory(string path) {
             throw new NotImplementedException();
         }
