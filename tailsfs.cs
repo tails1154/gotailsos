@@ -40,8 +40,8 @@ namespace testOS.FileSystem {
             // Make directory structure data
             buffer[9] = 0x01;
             buffer[10] = 0x03; // pro tip: dont code at 1:07 AM
-            byte[] textBytes = Encoding.ASCII.GetBytes("/");
-            Array.Copy(textBytes, 11, buffer, 11, textBytes.Length);
+            byte[] textBytess = Encoding.ASCII.GetBytes("/");
+            Array.Copy(textBytess, 11, buffer, 11, textBytess.Length);
             buffer[12] = 0x02;
             device.WriteBlock(0, 1, ref buffer);
         }
