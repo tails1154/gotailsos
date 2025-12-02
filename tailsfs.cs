@@ -15,9 +15,13 @@ using Cosmos.HAL.BlockDevice;
 
 namespace testOS.FileSystem {
     // This file was coded without the help of a LLM. The only LLM powered parts would be me being too lazy to fix syntax errors and asking it to do it for me or not knowing how to do something (but not like teling it to make a entire filesystem like i did with BadFS*). TailsFS2 will probably be AI Assisted to fix FS issues. I'm stil learning here lol.
-    public class TailsFS(BlockDevice device) {
+    public class TailsFS {
          private BlockDevice device;
          private static readonly string MAGIC = "TAILSFS1";
+         public TailsFS(BlockDevice device)
+         {
+             this.device = device;
+         }
 
         public bool Detect() {
             byte[] buffer = new byte[8]; // make a 8 byte buffer (because thats the maximum possible size of our *magic* number i mean text
