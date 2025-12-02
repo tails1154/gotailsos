@@ -8,25 +8,25 @@ using gotailsOS;
 namespace gotailsOS
 {
     using Cosmos.System.FileSystem;
-    public class Kernel: Sys.Kernel
+    public class Kernel : Sys.Kernel
     {
-        Sys.FileSystem.CosmosVFS vfs;
+        CosmosVFS fs;
         protected override void BeforeRun()
         {
             Console.WriteLine("[ OK ] Booted");
             Console.WriteLine("[ ... ] Init VFS");
-            vfs = new CosmosVFS();
-            Sys.FileSystem.VFS.VFSManager.RegisterVFS(vfs);
+            fs = new CosmosVFS();
+            Sys.FileSystem.VFS.VFSManager.RegisterVFS(fs);
             Console.WriteLine("[ OK ] Init VFS");
             Console.WriteLine("Welcome to GoTailsOS!");
 
         }
-        
+
         protected override void Run()
         {
-            Console.Write("GoTailsOS>");
+            Console.Write("GoTailsOS " + gotailsOS.CommandHandler.CurrentDirectory + ">");
             string input = Console.ReadLine();
-            CommandHandler.handleCommand(input, vfs);
+            CommandHandler.handleCommand(input, fs);
         }
     }
 }
