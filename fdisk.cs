@@ -73,7 +73,7 @@ namespace gotailsOS
                         running = false;
                         break;
                     case "g":
-                        DeleteAll(disk);
+                        DeleteAll(disk, diskIndex);
                         break;
                     case "f":
                         FormatPartition(disk, diskIndex);
@@ -88,9 +88,13 @@ namespace gotailsOS
                 }
             }
         }
-        private static void DeleteAll(Disk vfs)
+        private static void DeleteAll(Disk vfs, int diskIndex)
         {
+            Console.WriteLine("Deleting all partitions");
             vfs.Clear();
+            Console.WriteLine("Creating MBR");
+            var mbr = new MBR(BlockDevice.Devices[diskIndex]);
+            mbr.CreateMBR(BlockDevice.Devices[diskIndex]);
             Console.WriteLine("Cleared Partition table");
         }
         private static void MountPartition(Disk vfs)
@@ -118,6 +122,7 @@ namespace gotailsOS
             {
                 ex.ToString(); // i hate the "unused variable" warning lol
                 Console.WriteLine("Thats either not a valid partition, or you forgot what a number was and need to go back to PreK (joking)");
+                Console.WriteLine("Exception: " + ex.Message);
             }
         }
         private static void FormatPartition(Disk vfs, int diskIndex)
@@ -138,6 +143,7 @@ namespace gotailsOS
             {
                 ex.ToString(); // so it wont complain about me not using it
                 Console.WriteLine("Thats either not a valid partition, or you forgot what a number was and need to go back to PreK /j");
+                Console.WriteLine("Exception: " + ex.Message);
             }
         }
         private static void PrintFdiskHelp()
@@ -175,7 +181,7 @@ namespace gotailsOS
                 ulong sizeMB = (part.Host.BlockCount * part.Host.BlockSize) / (1024 * 1024);
 
                 Console.WriteLine(
-                    $"Partition {i}: {sizeMB} MB | FS: {(part.HasFileSystem ? part.LimitFS ?? "Unknown" : "None")}"
+                    $"Partition {i}: {sizeMB} MB | FS: {(part.HasFileSystem ? part.MountedFS.ToString() ?? "Unknown" : "None")} | Drive letter: {part.RootPath}"
                 );
             }
 

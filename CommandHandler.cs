@@ -3,8 +3,10 @@ using Sys = Cosmos.System;
 using Cosmos.System.FileSystem.Listing;
 using Cosmos.System.FileSystem;
 using System.Collections.Generic;  // for Stack<T>
-using System.Linq;                 // for Reverse()
-
+using System.Linq;
+using System.IO;                 // for Reverse()
+using gotailsos;
+using Cosmos.System.FileSystem.VFS;
 
 namespace gotailsOS
 {
@@ -88,6 +90,16 @@ namespace gotailsOS
                 case "fdisk":
                     fdisk.CmdFDiskInteractive(args);
                     break;
+                case "textedit":
+                    if (args.Length == 0)
+                    {
+                        Console.WriteLine("textedit: missing filename");
+                    }
+                    else
+                    {
+                        TextEdit.OpenNano(Resolve(args[0]));
+                    }
+                    break;
 
                 default:
                     Console.WriteLine("Unknown command: " + cmd);
@@ -105,6 +117,8 @@ namespace gotailsOS
             Console.WriteLine("  touch <file>   - Create file");
             Console.WriteLine("  rm <file/dir>  - Delete file or directory");
             Console.WriteLine("  fdisk <drive>  - Open a partition manager");
+            Console.WriteLine("  textedit <file>- Open text editor");
+            Console.WriteLine("  help           - Seems like you know how to use it");
         }
 
         //-------------------------------------------------------------------------------------------------------
@@ -140,12 +154,22 @@ namespace gotailsOS
             if (path.Length >= 3 && path[1] == ':' && path[2] == '\\')
             {
                 fullPath = path;
+                Console.WriteLine(fullPath);
             }
             // Absolute on current drive: \folder\file
             else if (path.StartsWith("\\"))
             {
                 string drive = CurrentDirectory.Split(':')[0];
                 fullPath = drive + ":" + path;
+                if (VFSManager.IsValidDriveId(drive))
+                {
+                    fullPath = drive + ":" + path;
+                }
+                else
+                {
+                    Console.WriteLine("Invalid drive letter");
+                    throw new Exception("Invalid drive letter");
+                }
             }
             // Relative path
             else
@@ -185,6 +209,7 @@ namespace gotailsOS
             // Rebuild path with trailing \
             var normalizedSegments = stack.Reverse().ToArray();
             string normalized = string.Join("\\", normalizedSegments) + "\\";
+            Console.WriteLine(normalized);
 
             return normalized;
         }
@@ -267,8 +292,9 @@ namespace gotailsOS
             try
             {
                 var dir = vfs.GetDirectory(target);
-                CurrentDirectory = dir.mFullPath.EndsWith("\\") ? dir.mFullPath : dir.mFullPath + "\\";
-                if (CurrentDirectory == "\\") { throw new Exception("Nonexistant directory"); }
+                CurrentDirectory = dir.mFullPath.EndsWith("\\") ? dir.mFullPath : dir.mFullPath + "\\"; // TODO: rework this
+                CurrentDirectory = NormalizePath(CurrentDirectory, oldCurDir);
+                //Console.WriteLine("target: " + target);
             }
             catch
             {
