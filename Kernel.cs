@@ -7,72 +7,96 @@ using testOS.FileSystem;
 using MiniGfx;
 using Cosmos.System.Graphics;
 using System.Drawing;
-///using testOS.CommandInterpreter;
 
 namespace testOS
 {
     public class Kernel : Cosmos.System.Kernel
     {
-        private BadFS3 fs;
-        private BlockDevice disk;
-        private bool diskAvailable = false; // true when we have a disk
+        // Multi-drive support: map index (0,1,2,...) to BadFS3 instance
+        private Dictionary<int, BadFS3> drives = new Dictionary<int, BadFS3>();
+        private int currentDrive = 0;
         private string currentDir = "/";
-        private string ResolvePath(string input)
-        {
-            if (string.IsNullOrEmpty(input))
-                return currentDir;
+        private bool diskAvailable = false;
 
-            // If absolute path, return directly
-            if (input.StartsWith("/"))
-                return input;
-
-            // If relative, join with currentDir
-            if (currentDir == "/")
-                return "/" + input;
-
-            return currentDir + "/" + input;
-        }
-       // private Cosmos.System.Graphics.SVGAIICanvas canvas;
         private CommandInterpreter interpreter;
 
+        // Utility to resolve and map N:/path style to drive and path
+        public bool TryParseDrivePath(string input, out int driveNum, out string path)
+        {
+            driveNum = currentDrive;
+            path = currentDir;
+            if (string.IsNullOrEmpty(input)) return false;
+
+            var parts = input.Split(new[] { ':' }, 2);
+            if (parts.Length == 2 && int.TryParse(parts[0], out driveNum))
+            {
+                path = parts[1];
+                if (!path.StartsWith("/")) path = "/" + path;
+                return drives.ContainsKey(driveNum);
+            }
+
+            // No drive prefix, use current drive and resolve relative path
+            path = ResolvePath(input);
+            return drives.ContainsKey(driveNum);
+        }
+
+        // Handles relative/absolute paths for current drive/dir
+        private string ResolvePath(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return currentDir;
+            if (input.StartsWith("/")) return input;
+            if (currentDir == "/") return "/" + input;
+            return currentDir + "/" + input;
+        }
 
         protected override void BeforeRun()
         {
             Console.WriteLine("[ OK ] Boot");
 
+            drives.Clear();
+            diskAvailable = false;
+
             if (BlockDevice.Devices == null || BlockDevice.Devices.Count == 0)
             {
                 Console.WriteLine("[ERR] no disks");
-                diskAvailable = false;
-                fs = null;
-                disk = null;
                 return;
             }
 
-            disk = BlockDevice.Devices[0];
-            if (disk == null)
+            int idx = 0;
+            foreach (var device in BlockDevice.Devices)
             {
-                Console.WriteLine("[ERR] selected disk is null");
-                diskAvailable = false;
-                fs = null;
-                return;
+                if (device != null)
+                {
+                    var fs = new BadFS3(device);
+                    drives[idx] = fs;
+                    if (fs.Detect())
+                        Console.WriteLine($"[ OK ] BadFS3 detected on disk {idx}");
+                    else
+                        Console.WriteLine($"[ WARN ] No BadFS3 present on disk {idx}. Type 'format {idx}:' to create.");
+                }
+                idx++;
             }
 
-            fs = new BadFS3(disk);
-            diskAvailable = true;
+            if (drives.Count > 0)
+            {
+                diskAvailable = true;
+                currentDrive = 0; // default
+            }
 
-            if (fs.Detect()) Console.WriteLine("[ OK ] BadFS3 detected");
-            else Console.WriteLine("[ WARN ] No BadFS3 present. Type 'format' to create. (DISK 0 WILL BE FORMATTED)");
             interpreter = new CommandInterpreter(
-                fs,
-                ResolvePath,
-                newDir => currentDir = newDir,
-                () => currentDir,
+                drives,
+                this,
+                () => currentDrive,
+                                                 () => currentDir,
+                                                 (drive) => currentDrive = drive,
+                                                 (dir) => currentDir = dir,
                                                  diskAvailable
             );
         }
-        protected override void Run() {
-            Console.Write($"GoTailsOS: {currentDir}> ");
+
+        protected override void Run()
+        {
+            Console.Write($"GoTailsOS: {currentDrive}:{currentDir}> ");
             string line = Console.ReadLine();
             try
             {
@@ -83,6 +107,5 @@ namespace testOS
                 Console.WriteLine("ERR: " + ex.Message);
             }
         }
-
     }
 }
