@@ -151,6 +151,14 @@ namespace testOS
                 case "pwd":
                     Console.WriteLine($"{getCurrentDrive()}:{getCurrentDir()}");
                     break;
+                case "reboot":
+                    Console.WriteLine("Rebooting...");
+                    Cosmos.Core.CPU.Reboot();
+                    break;
+                case "shutdown":
+                    Console.WriteLine("Shutting down...");
+                    Cosmos.HAL.Power.ACPIShutdown();
+                    break;
                 case "edit":
                     if (!diskAvailable) { Console.WriteLine("ERR: no disk"); break; }
                     if (arg == null) { Console.WriteLine("usage: edit <file>"); break; }
@@ -177,6 +185,8 @@ namespace testOS
                     Console.WriteLine("  cd <N:/dir>");
                     Console.WriteLine("  pwd");
                     Console.WriteLine("  edit <N:/file>");
+                    Console.WriteLine("  shutdown");
+                    Console.WriteLine("  reboot");
                     // etc.
                     break;
 
