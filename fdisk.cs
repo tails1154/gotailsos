@@ -11,7 +11,7 @@ using System.IO;
 using System.Linq;
 
 
-namespace gotailsOS
+namespace gotailsos
 {
     public static class fdisk
     {

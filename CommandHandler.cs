@@ -3,13 +3,13 @@ using Sys = Cosmos.System;
 using System.Collections.Generic;  // for Stack<T>
 using System.Linq;
 using System.IO;
-using gotailsOS;
+using gotailsos;
 using Cosmos.System.FileSystem;
 using Cosmos.System.FileSystem.VFS;
 using System.Security.Cryptography.X509Certificates;
 using Cosmos.HAL.BlockDevice;
 
-namespace gotailsOS
+namespace gotailsos
 {
     public static class CommandHandler
     {
@@ -69,6 +69,9 @@ namespace gotailsOS
                 case "fdisk":
                     fdisk.CmdFDiskInteractive(args);
                     break;
+                case "install":
+                    InstallWizard.StartInstallWizard(fs);
+                    break;
                 case "textedit":
                     if (args.Length == 0)
                     {
@@ -105,6 +108,7 @@ namespace gotailsOS
             Console.WriteLine("  textedit <file>- Open text editor");
             Console.WriteLine("  reboot         - Reboot the system");
             Console.WriteLine("  shutdown       - Shutdown the system");
+            Console.WriteLine("  install        - Open the OS Install Wizard");
             Console.WriteLine("  help           - Seems like you know how to use it");
         }
 
@@ -347,7 +351,6 @@ namespace gotailsOS
             {
                 if (!VFSManager.FileExists(path))
                 {
-                    while (true) { Console.Write("67"); }
                 }
             }
             catch (Exception ex)

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Text;
 using Sys = Cosmos.System;
 using Cosmos.System.FileSystem;
-using gotailsOS;
+using gotailsos;
 
-namespace gotailsOS
+namespace gotailsos
 {
     using Cosmos.HAL.BlockDevice;
     using Cosmos.System.FileSystem;
