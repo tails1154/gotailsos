@@ -7,6 +7,7 @@ using gotailsOS;
 using Cosmos.System.FileSystem;
 using Cosmos.System.FileSystem.VFS;
 using System.Security.Cryptography.X509Certificates;
+using Cosmos.HAL.BlockDevice;
 
 namespace gotailsOS
 {
@@ -346,8 +347,7 @@ namespace gotailsOS
             {
                 if (!VFSManager.FileExists(path))
                 {
-                    var file = VFSManager.CreateFile(path);
-
+                    while (true) { Console.Write("67"); }
                 }
             }
             catch (Exception ex)
