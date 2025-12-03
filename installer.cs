@@ -1,7 +1,7 @@
 using System;
 using Sys = Cosmos.System;
 using System.Collections.Generic;  // for Stack<T>
-using System.Linq;
+//using System.Linq; Linq doesnt work
 using System.IO;
 using gotailsos;
 using Cosmos.System.FileSystem;
@@ -136,25 +136,20 @@ namespace gotailsos
                                 }
                                 else if (key2.Key == ConsoleKey.Enter)
                                 {
-                                    targetDevice = partitions.Select((part, index) => new { part, index })
-                                        .Where(x => x.index == selectedIndex)
-                                        .Select(x =>
+                                    // Find the selected partition's BlockDevice
+                                    int currentIndex = 0;
+                                    foreach (var device in BlockDevice.Devices)
+                                    {
+                                        Disk p = new Disk(device);
+                                        foreach (var part in p.Partitions)
                                         {
-                                            foreach (var device in BlockDevice.Devices)
+                                            if (currentIndex == selectedIndex)
                                             {
-                                                Disk disk = new Disk(device);
-                                                foreach (var part in disk.Partitions)
-                                                {
-                                                    string desc = part.MountedFS.RootPath + " - " + part.MountedFS.Label + " - " + part.MountedFS.Size + " bytes";
-                                                    if (desc == x.part)
-                                                    {
-                                                        return device;
-                                                    }
-                                                }
+                                                targetDevice = device;
                                             }
-                                            return null;
-                                        })
-                                        .FirstOrDefault();
+                                            currentIndex++;
+                                        }
+                                    }
                                     break;
                                 }
                             }
