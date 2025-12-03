@@ -6,6 +6,7 @@ using System.IO;
 using gotailsOS;
 using Cosmos.System.FileSystem;
 using Cosmos.System.FileSystem.VFS;
+using System.Security.Cryptography.X509Certificates;
 
 namespace gotailsOS
 {
@@ -74,7 +75,7 @@ namespace gotailsOS
                     }
                     else
                     {
-                        gotailsos.TextEdit.OpenNano(Resolve(args[0]));
+                        gotailsos.TextEdit.OpenNano(Resolve(args[0]), fs);
                     }
                     break;
                 case "reboot":
@@ -340,16 +341,18 @@ namespace gotailsOS
             }
 
             string path = Resolve(args[0]);
+
             try
             {
                 if (!VFSManager.FileExists(path))
                 {
-                    VFSManager.CreateFile(path);
+                    var file = VFSManager.CreateFile(path);
+
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("touch: cannot create '" + args[0] + "': " + ex.Message);
+                Console.WriteLine($"touch: cannot create '{args[0]}': {ex.Message}");
             }
         }
 

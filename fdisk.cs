@@ -98,7 +98,7 @@ namespace gotailsOS
             var dev = BlockDevice.Devices[diskIndex];
 
             ulong totalBlocks = dev.BlockCount;
-            uint CHUNK_BLOCKS = Cosmos.Core.CPU.GetAmountOfRAM(); // ≈ 1MB if block=512 bytes
+            uint CHUNK_BLOCKS = Cosmos.Core.CPU.GetAmountOfRAM() - 1; // ≈ 1MB if block=512 bytes
 
             // Prepare 1MB of zeroes
             byte[] zeroChunk = new byte[CHUNK_BLOCKS * dev.BlockSize];
@@ -110,35 +110,45 @@ namespace gotailsOS
             int spinIndex = 0;
 
             Console.WriteLine("Zeroing disk...");
-
-            while (written < totalBlocks)
+            try
             {
-                // how many blocks to write this iteration?
-                ulong remaining = totalBlocks - written;
-                ulong blocksThisTime =
-                    (remaining >= (ulong)CHUNK_BLOCKS) ? (ulong)CHUNK_BLOCKS : remaining;
-
-                // write multiple blocks in one call
-                dev.WriteBlock(written, blocksThisTime, ref zeroChunk);
-
-                written += blocksThisTime;
-
-                // update progress
-                ulong percent = (written * 100) / totalBlocks;
-                if (percent != lastPercent)
+                while (written < totalBlocks)
                 {
-                    lastPercent = percent;
+                    // how many blocks to write this iteration?
+                    ulong remaining = totalBlocks - written;
+                    ulong blocksThisTime =
+                        (remaining >= (ulong)CHUNK_BLOCKS) ? (ulong)CHUNK_BLOCKS : remaining;
 
-                    int bars = (int)(percent / 2);
-                    int spaces = 50 - bars;
+                    // write multiple blocks in one call
+                    dev.WriteBlock(written, blocksThisTime, ref zeroChunk);
 
-                    string bar = "[" + new string('#', bars) + new string('.', spaces) + "]";
-                    string spin = spinner[spinIndex];
+                    written += blocksThisTime;
 
-                    spinIndex = (spinIndex + 1) % spinner.Length;
+                    // update progress
+                    ulong percent = (written * 100) / totalBlocks;
+                    if (percent != lastPercent)
+                    {
+                        lastPercent = percent;
 
-                    Console.Write($"\r{bar} {percent}% {spin}");
+                        int bars = (int)(percent / 2);
+                        int spaces = 50 - bars;
+
+                        string bar = "[" + new string('#', bars) + new string('.', spaces) + "]";
+                        string spin = spinner[spinIndex];
+
+                        spinIndex = (spinIndex + 1) % spinner.Length;
+
+                        Console.Write($"\r{bar} {percent}% {spin}");
+                    }
                 }
+            }
+            finally
+            {
+                Console.WriteLine();
+                Console.WriteLine("Disk Initlialization Complete!");
+                Console.WriteLine("Rebooting in 5 seconds");
+                Cosmos.HAL.Global.PIT.Wait(5000);
+                Sys.Power.Reboot();
             }
 
             Console.WriteLine("\nDone!");
@@ -198,6 +208,7 @@ namespace gotailsOS
                     try
                     {
                         // vfs.Partitions[partnum].MountedFS.Format("FAT32", true);
+                        vfs.Partitions[partnum].MountedFS.Format("FAT32", false);
                         vfs.Partitions[partnum].MountedFS.CreateDirectory(vfs.Partitions[partnum].MountedFS.GetRootDirectory(), "tailsfs");
                     }
                     catch (Exception ex)
@@ -261,7 +272,12 @@ namespace gotailsOS
 
         private static void CreatePartitionInteractive(Cosmos.System.FileSystem.Disk disk, ref bool modified)
         {
-            Console.Write("Partition size (MB) (Total Space: " + (disk.Size / 1000000 - 900) + " MB): "); //disk.Size is in bytes not MB lol THE DOCS LIED
+            var diskSizeMB = disk.Size / 1000000 - 900;
+            if (diskSizeMB <= 0)
+            {
+                diskSizeMB = disk.Size / 1000000;
+            }
+            Console.Write("Partition size (MB) (Total Space: " + diskSizeMB + " MB): "); //disk.Size is in bytes not MB lol THE DOCS LIED
             string input = Console.ReadLine().Trim();
 
             if (!int.TryParse(input, out int size))
@@ -269,7 +285,7 @@ namespace gotailsOS
                 Console.WriteLine("Invalid size.");
                 return;
             }
-            if (size <= 0 || (long)size * 1000000 - 900 > disk.Size)
+            if (size <= 0 || diskSizeMB < size)
             {
                 Console.WriteLine("Size out of range.");
                 return;
