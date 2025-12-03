@@ -8,6 +8,7 @@ using System.Configuration.Assemblies;
 using Cosmos.HAL;
 using System.Runtime.CompilerServices;
 using System.IO;
+using System.Linq;
 
 
 namespace gotailsOS
@@ -93,9 +94,58 @@ namespace gotailsOS
         {
             Console.WriteLine("Deleting all partitions");
             vfs.Clear();
+
+            var dev = BlockDevice.Devices[diskIndex];
+
+            ulong totalBlocks = dev.BlockCount;
+            uint CHUNK_BLOCKS = Cosmos.Core.CPU.GetAmountOfRAM(); // ≈ 1MB if block=512 bytes
+
+            // Prepare 1MB of zeroes
+            byte[] zeroChunk = new byte[CHUNK_BLOCKS * dev.BlockSize];
+
+            ulong written = 0;
+            ulong lastPercent = 0;
+
+            string[] spinner = { "/", "-", "\\", "|" };
+            int spinIndex = 0;
+
+            Console.WriteLine("Zeroing disk...");
+
+            while (written < totalBlocks)
+            {
+                // how many blocks to write this iteration?
+                ulong remaining = totalBlocks - written;
+                ulong blocksThisTime =
+                    (remaining >= (ulong)CHUNK_BLOCKS) ? (ulong)CHUNK_BLOCKS : remaining;
+
+                // write multiple blocks in one call
+                dev.WriteBlock(written, blocksThisTime, ref zeroChunk);
+
+                written += blocksThisTime;
+
+                // update progress
+                ulong percent = (written * 100) / totalBlocks;
+                if (percent != lastPercent)
+                {
+                    lastPercent = percent;
+
+                    int bars = (int)(percent / 2);
+                    int spaces = 50 - bars;
+
+                    string bar = "[" + new string('#', bars) + new string('.', spaces) + "]";
+                    string spin = spinner[spinIndex];
+
+                    spinIndex = (spinIndex + 1) % spinner.Length;
+
+                    Console.Write($"\r{bar} {percent}% {spin}");
+                }
+            }
+
+            Console.WriteLine("\nDone!");
+
             Console.WriteLine("Creating MBR");
-            var mbr = new MBR(BlockDevice.Devices[diskIndex]);
-            mbr.CreateMBR(BlockDevice.Devices[diskIndex]);
+            var mbr = new MBR(dev);
+            mbr.CreateMBR(dev);
             Console.WriteLine("Cleared Partition table");
         }
         private static void MountPartition(Disk vfs)
@@ -122,7 +172,7 @@ namespace gotailsOS
             catch (Exception ex)
             {
                 ex.ToString(); // i hate the "unused variable" warning lol
-                Console.WriteLine("Thats either not a valid partition, or you forgot what a number was and need to go back to PreK (joking)");
+                Console.WriteLine("Thats either not a valid partition, Not a number, Or something went wrong during mounting");
                 Console.WriteLine("Exception: " + ex.Message);
             }
         }
@@ -137,7 +187,7 @@ namespace gotailsOS
             {
                 int partnum = int.Parse(input);
                 Console.WriteLine("Formatting");
-                vfs.FormatPartition(partnum, "FAT32", true);
+                vfs.FormatPartition(partnum, "FAT32", false);
                 Console.WriteLine("Formatted!");
                 vfs.Mount();
                 var root = vfs.Partitions[partnum].RootPath;
@@ -148,7 +198,7 @@ namespace gotailsOS
                     try
                     {
                         // vfs.Partitions[partnum].MountedFS.Format("FAT32", true);
-                        vfs.Partitions[partnum].MountedFS.CreateDirectory(vfs.Partitions[partnum].MountedFS.GetRootDirectory(), "/System");
+                        vfs.Partitions[partnum].MountedFS.CreateDirectory(vfs.Partitions[partnum].MountedFS.GetRootDirectory(), "tailsfs");
                     }
                     catch (Exception ex)
                     {
@@ -163,7 +213,7 @@ namespace gotailsOS
             catch (Exception ex)
             {
                 ex.ToString(); // so it wont complain about me not using it
-                Console.WriteLine("Thats either not a valid partition, or you forgot what a number was and need to go back to PreK /j");
+                Console.WriteLine("Thats either not a valid partition, Not a number, Or something went wrong during formatting");
                 Console.WriteLine("Exception: " + ex.Message);
             }
         }
@@ -211,7 +261,7 @@ namespace gotailsOS
 
         private static void CreatePartitionInteractive(Cosmos.System.FileSystem.Disk disk, ref bool modified)
         {
-            Console.Write("Partition size (MB) (Total Space: " + (disk.Size / 1000000) + "): "); //disk.Size is in bytes not MB lol THE DOCS LIED
+            Console.Write("Partition size (MB) (Total Space: " + (disk.Size / 1000000 - 900) + " MB): "); //disk.Size is in bytes not MB lol THE DOCS LIED
             string input = Console.ReadLine().Trim();
 
             if (!int.TryParse(input, out int size))
@@ -219,7 +269,7 @@ namespace gotailsOS
                 Console.WriteLine("Invalid size.");
                 return;
             }
-            if (size <= 0 || (long)size * 1000000 > disk.Size)
+            if (size <= 0 || (long)size * 1000000 - 900 > disk.Size)
             {
                 Console.WriteLine("Size out of range.");
                 return;
