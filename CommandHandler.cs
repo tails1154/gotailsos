@@ -67,9 +67,6 @@ namespace gotailsOS
                 case "fdisk":
                     fdisk.CmdFDiskInteractive(args);
                     break;
-                case "fsck":
-                    gotailsos.fsck.CmdFsckInteractive(args);
-                    break;
                 case "textedit":
                     if (args.Length == 0)
                     {
@@ -104,7 +101,6 @@ namespace gotailsOS
             Console.WriteLine("  rm <file/dir>  - Delete file or directory");
             Console.WriteLine("  fdisk <drive>  - Open a partition manager");
             Console.WriteLine("  textedit <file>- Open text editor");
-            Console.WriteLine("  fsck <disk> <partition> [--repair] - Check filesystem integrity");
             Console.WriteLine("  reboot         - Reboot the system");
             Console.WriteLine("  shutdown       - Shutdown the system");
             Console.WriteLine("  help           - Seems like you know how to use it");

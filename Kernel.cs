@@ -50,7 +50,7 @@ namespace gotailsOS
         {
             try
             {
-                Console.Write("GoTailsOS " + CommandHandler.DisplayPath(CommandHandler.CurrentDirectory) + ">");
+                Console.Write("GoTailsOS " + CommandHandler.DisplayPath(CommandHandler.CurrentDirectory) + " >");
                 string input = Console.ReadLine();
 
                 CommandHandler.handleCommand(input);
