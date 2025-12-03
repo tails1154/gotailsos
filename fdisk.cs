@@ -7,6 +7,7 @@ using Cosmos.HAL.BlockDevice;
 using System.Configuration.Assemblies;
 using Cosmos.HAL;
 using System.Runtime.CompilerServices;
+using System.IO;
 
 
 namespace gotailsOS
@@ -138,6 +139,26 @@ namespace gotailsOS
                 Console.WriteLine("Formatting");
                 vfs.FormatPartition(partnum, "FAT32", true);
                 Console.WriteLine("Formatted!");
+                vfs.Mount();
+                var root = vfs.Partitions[partnum].RootPath;
+                Console.WriteLine("Mounted at " + root);
+                Console.WriteLine("Creating default directories...");
+                if (true)
+                {
+                    try
+                    {
+                        // vfs.Partitions[partnum].MountedFS.Format("FAT32", true);
+                        vfs.Partitions[partnum].MountedFS.CreateDirectory(vfs.Partitions[partnum].MountedFS.GetRootDirectory(), "/System");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Error... Exception: " + ex.Message);
+                        // Console.WriteLine(ex.Source);
+                        //Console.WriteLine(ex.StackTrace);
+                        Console.WriteLine(ex.InnerException);
+                        //Console.WriteLine(ex.Data.ToString());
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -190,12 +211,17 @@ namespace gotailsOS
 
         private static void CreatePartitionInteractive(Cosmos.System.FileSystem.Disk disk, ref bool modified)
         {
-            Console.Write("Partition size (MB) (Total Space: " + disk.Size + "): ");
+            Console.Write("Partition size (MB) (Total Space: " + (disk.Size / 1000000) + "): "); //disk.Size is in bytes not MB lol THE DOCS LIED
             string input = Console.ReadLine().Trim();
 
             if (!int.TryParse(input, out int size))
             {
                 Console.WriteLine("Invalid size.");
+                return;
+            }
+            if (size <= 0 || (long)size * 1000000 > disk.Size)
+            {
+                Console.WriteLine("Size out of range.");
                 return;
             }
 

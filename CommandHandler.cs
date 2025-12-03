@@ -4,15 +4,23 @@ using System.Collections.Generic;  // for Stack<T>
 using System.Linq;
 using System.IO;
 using gotailsOS;
+using Cosmos.System.FileSystem;
+using Cosmos.System.FileSystem.VFS;
 
 namespace gotailsOS
 {
     public static class CommandHandler
     {
         public static string CurrentDirectory = "0:\\";
-
+        static CosmosVFS fs;
         public static void handleCommand(string command)
         {
+            try
+            {
+                fs = new CosmosVFS();
+                Sys.FileSystem.VFS.VFSManager.RegisterVFS(fs);
+            }
+            catch { }
             if (string.IsNullOrWhiteSpace(command)) return;
             string[] parts = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             string cmd = parts[0].ToLower();
@@ -59,6 +67,9 @@ namespace gotailsOS
                 case "fdisk":
                     fdisk.CmdFDiskInteractive(args);
                     break;
+                case "fsck":
+                    gotailsos.fsck.CmdFsckInteractive(args);
+                    break;
                 case "textedit":
                     if (args.Length == 0)
                     {
@@ -68,6 +79,12 @@ namespace gotailsOS
                     {
                         gotailsos.TextEdit.OpenNano(Resolve(args[0]));
                     }
+                    break;
+                case "reboot":
+                    Sys.Power.Reboot();
+                    break;
+                case "shutdown":
+                    Sys.Power.Shutdown();
                     break;
 
                 default:
@@ -87,6 +104,9 @@ namespace gotailsOS
             Console.WriteLine("  rm <file/dir>  - Delete file or directory");
             Console.WriteLine("  fdisk <drive>  - Open a partition manager");
             Console.WriteLine("  textedit <file>- Open text editor");
+            Console.WriteLine("  fsck <disk> <partition> [--repair] - Check filesystem integrity");
+            Console.WriteLine("  reboot         - Reboot the system");
+            Console.WriteLine("  shutdown       - Shutdown the system");
             Console.WriteLine("  help           - Seems like you know how to use it");
         }
 
@@ -241,7 +261,7 @@ namespace gotailsOS
             string target = Resolve(args[0]);
             try
             {
-                if (Directory.Exists(target))
+                if (VFSManager.DirectoryExists(target))
                 {
                     CurrentDirectory = target.EndsWith("\\") ? target : target + "\\";
                 }
@@ -262,7 +282,7 @@ namespace gotailsOS
 
             try
             {
-                if (!Directory.Exists(target))
+                if (!VFSManager.DirectoryExists(target))
                 {
                     Console.WriteLine("ls: cannot access '" + target + "'");
                     return;
@@ -271,23 +291,19 @@ namespace gotailsOS
                 // List directories
                 try
                 {
-                    var dirs = Directory.GetDirectories(target);
+                    var dirs = VFSManager.GetDirectoryListing(target);
                     foreach (var dir in dirs)
                     {
-                        var name = Path.GetFileName(dir);
-                        Console.WriteLine(name + "\\");
-                    }
-                }
-                catch { }
-
-                // List files
-                try
-                {
-                    var files = Directory.GetFiles(target);
-                    foreach (var file in files)
-                    {
-                        var name = Path.GetFileName(file);
-                        Console.WriteLine(name);
+                        var name = dir.mName;
+                        if (dir.mEntryType == Sys.FileSystem.Listing.DirectoryEntryTypeEnum.Directory)
+                        {
+                            //name += "";
+                            Console.WriteLine("<DIR> " + name);
+                        }
+                        else
+                        {
+                            Console.WriteLine(name);
+                        }
                     }
                 }
                 catch { }
@@ -308,9 +324,10 @@ namespace gotailsOS
             }
 
             string path = Resolve(args[0]);
+            Console.WriteLine(path);
             try
             {
-                Directory.CreateDirectory(path);
+                VFSManager.CreateDirectory(path);
             }
             catch (Exception ex)
             {
@@ -329,9 +346,9 @@ namespace gotailsOS
             string path = Resolve(args[0]);
             try
             {
-                if (!File.Exists(path))
+                if (!VFSManager.FileExists(path))
                 {
-                    File.Create(path).Close();
+                    VFSManager.CreateFile(path);
                 }
             }
             catch (Exception ex)
@@ -352,13 +369,13 @@ namespace gotailsOS
 
             try
             {
-                if (File.Exists(path))
+                if (VFSManager.FileExists(path))
                 {
-                    File.Delete(path);
+                    VFSManager.DeleteFile(path);
                 }
-                else if (Directory.Exists(path))
+                else if (VFSManager.DirectoryExists(path))
                 {
-                    Directory.Delete(path, true);  // recursive delete
+                    VFSManager.DeleteDirectory(path, true);  // recursive delete
                 }
                 else
                 {

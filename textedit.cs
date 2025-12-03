@@ -1,13 +1,7 @@
 using System;
-using Sys = Cosmos.System;
-using Cosmos.System.FileSystem.Listing;
-using Cosmos.System.FileSystem;
-using System.Collections.Generic;  // for Stack<T>
+using System.Collections.Generic;
 using System.Linq;
-using System.IO;                 // for Reverse()
-using gotailsos;
-using System.Reflection.Metadata.Ecma335;
-
+using System.IO;
 
 namespace gotailsos
 {
@@ -15,10 +9,11 @@ namespace gotailsos
     {
         public static void OpenNano(string path)
         {
-            if (!Sys.FileSystem.VFS.VFSManager.FileExists(path))
+            // Create file if it doesn't exist
+            if (!File.Exists(path))
             {
                 Console.WriteLine("File does not exist. Creating new file: " + path);
-                var file = Sys.FileSystem.VFS.VFSManager.CreateFile(path);
+                File.Create(path).Close();
             }
 
             List<string> lines = new List<string>();
@@ -69,7 +64,11 @@ namespace gotailsos
                 {
                     Console.WriteLine(lines[i]);
                 }
-                Console.SetCursorPosition(cursorX, cursorY);
+                // Set cursor to correct position: row is line number, column is position in line
+                if (cursorY < Console.BufferHeight && cursorX < Console.BufferWidth)
+                {
+                    Console.SetCursorPosition(cursorX, cursorY);
+                }
             }
 
             Render();
@@ -107,7 +106,67 @@ namespace gotailsos
                     undoStack.Push(SerializeLines());
                     redoStack.Clear();
 
-                    if (keyInfo.Key == ConsoleKey.Backspace)
+                    if (keyInfo.Key == ConsoleKey.LeftArrow)
+                    {
+                        if (cursorX > 0)
+                            cursorX--;
+                        else if (cursorY > 0)
+                        {
+                            cursorY--;
+                            cursorX = lines[cursorY].Length;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.RightArrow)
+                    {
+                        if (cursorY < lines.Count && cursorX < lines[cursorY].Length)
+                            cursorX++;
+                        else if (cursorY < lines.Count - 1)
+                        {
+                            cursorY++;
+                            cursorX = 0;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.UpArrow)
+                    {
+                        if (cursorY > 0)
+                        {
+                            cursorY--;
+                            if (cursorX > lines[cursorY].Length)
+                                cursorX = lines[cursorY].Length;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.DownArrow)
+                    {
+                        if (cursorY < lines.Count - 1)
+                        {
+                            cursorY++;
+                            if (cursorX > lines[cursorY].Length)
+                                cursorX = lines[cursorY].Length;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Home)
+                    {
+                        cursorX = 0;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.End)
+                    {
+                        if (cursorY < lines.Count)
+                            cursorX = lines[cursorY].Length;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Delete)
+                    {
+                        if (cursorY < lines.Count && cursorX < lines[cursorY].Length)
+                        {
+                            lines[cursorY] = lines[cursorY].Remove(cursorX, 1);
+                        }
+                        else if (cursorY < lines.Count - 1)
+                        {
+                            // Delete line break - merge with next line
+                            lines[cursorY] += lines[cursorY + 1];
+                            lines.RemoveAt(cursorY + 1);
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Backspace)
                     {
                         if (cursorX > 0)
                         {
@@ -155,6 +214,14 @@ namespace gotailsos
                             cursorX++;
                         }
                     }
+                    else
+                    {
+                        // Unknown key - remove from undo stack
+                        if (undoStack.Count > 0) undoStack.Pop();
+                        Render();
+                        continue;
+                    }
+
                     Render();
                 }
             }

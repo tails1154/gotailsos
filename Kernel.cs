@@ -18,27 +18,23 @@ namespace gotailsOS
             try
             {
                 Console.WriteLine("[ OK ] Booted");
-                Console.WriteLine("[ ... ] Init VFS");
-                fs = new CosmosVFS();
-                Sys.FileSystem.VFS.VFSManager.RegisterVFS(fs);
-                Console.WriteLine("[ OK ] Init VFS");
-                foreach (var items in BlockDevice.Devices)
-                {
-                    var device = items;
-                    Disk disk = new Disk(device);
-                    disk.Mount();
-                    for (int i = 0; i < disk.Partitions.Count; i++)
-                    {
-                        ManagedPartition part = disk.Partitions[i];
+                // foreach (var items in BlockDevice.Devices)
+                // {
+                //     var device = items;
+                //     Disk disk = new Disk(device);
+                //     disk.Mount();
+                //     for (int i = 0; i < disk.Partitions.Count; i++)
+                //     {
+                //         ManagedPartition part = disk.Partitions[i];
 
-                        ulong sizeMB = (part.Host.BlockCount * part.Host.BlockSize) / (1024 * 1024);
-                        Console.WriteLine(
-                            $"Partition {i}: {sizeMB} MB | FS: {(part.HasFileSystem ? part.MountedFS.ToString() ?? "Unknown" : "None")} | Drive letter: {part.RootPath}"
-                        );
-                    }
+                //         ulong sizeMB = (part.Host.BlockCount * part.Host.BlockSize) / (1024 * 1024);
+                //         Console.WriteLine(
+                //             $"Partition {i}: {sizeMB} MB | FS: {(part.HasFileSystem ? part.MountedFS.ToString() ?? "Unknown" : "None")} | Drive letter: {part.RootPath}"
+                //         );
+                //     }
 
-                    // Console.WriteLine("Device: " + device.Model);
-                }
+                //     // Console.WriteLine("Device: " + device.Model);
+                // }
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine("Welcome to GoTailsOS!");
                 Console.ForegroundColor = ConsoleColor.White;
