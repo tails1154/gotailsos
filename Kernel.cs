@@ -10,8 +10,6 @@ namespace gotailsOS
     using Cosmos.HAL.BlockDevice;
     using Cosmos.System.FileSystem;
     using Cosmos.System.FileSystem.VFS;
-    using GoTailsOS;
-
     public class Kernel : Sys.Kernel
     {
         CosmosVFS fs;
@@ -47,7 +45,7 @@ namespace gotailsOS
             }
             catch (Exception ex)
             {
-                BugCheck.Bsod(ex);
+                gotailsos.BugCheck.Bsod(ex);
             }
 
         }
@@ -59,11 +57,11 @@ namespace gotailsOS
                 Console.Write("GoTailsOS " + CommandHandler.DisplayPath(CommandHandler.CurrentDirectory) + ">");
                 string input = Console.ReadLine();
 
-                CommandHandler.handleCommand(input, fs);
+                CommandHandler.handleCommand(input);
             }
             catch (Exception ex)
             {
-                BugCheck.Bsod(ex);
+                gotailsos.BugCheck.Bsod(ex);
             }
         }
     }

@@ -1,48 +1,17 @@
 using System;
 using Sys = Cosmos.System;
-using Cosmos.System.FileSystem.Listing;
-using Cosmos.System.FileSystem;
 using System.Collections.Generic;  // for Stack<T>
 using System.Linq;
-using System.IO;                 // for Reverse()
-using gotailsos;
-using Cosmos.System.FileSystem.VFS;
+using System.IO;
+using gotailsOS;
 
 namespace gotailsOS
 {
     public static class CommandHandler
     {
-        // Check if a directory exists
-        private static bool DirectoryExists(CosmosVFS vfs, string path)
-        {
-            try
-            {
-                vfs.GetDirectory(path);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        // Check if a file exists
-        private static bool FileExists(CosmosVFS vfs, string path)
-        {
-            try
-            {
-                vfs.GetFile(path);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
         public static string CurrentDirectory = "0:\\";
 
-        public static void handleCommand(string command, Sys.FileSystem.CosmosVFS vfs)
+        public static void handleCommand(string command)
         {
             if (string.IsNullOrWhiteSpace(command)) return;
             string[] parts = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -65,23 +34,23 @@ namespace gotailsOS
                     break;
 
                 case "cd":
-                    CmdCD(args, vfs);
+                    CmdCD(args);
                     break;
 
                 case "ls":
-                    CmdLS(args, vfs);
+                    CmdLS(args);
                     break;
 
                 case "mkdir":
-                    CmdMKDir(args, vfs);
+                    CmdMKDir(args);
                     break;
 
                 case "touch":
-                    CmdTouch(args, vfs);
+                    CmdTouch(args);
                     break;
 
                 case "rm":
-                    CmdRM(args, vfs);
+                    CmdRM(args);
                     break;
 
                 case "help":
@@ -97,7 +66,7 @@ namespace gotailsOS
                     }
                     else
                     {
-                        TextEdit.OpenNano(Resolve(args[0]));
+                        gotailsos.TextEdit.OpenNano(Resolve(args[0]));
                     }
                     break;
 
@@ -129,7 +98,7 @@ namespace gotailsOS
             if (string.IsNullOrWhiteSpace(path))
                 return path;
 
-            return path.Replace('/', '\\');
+            return path.Replace('/', '\\').Trim();
         }
 
         public static string DisplayPath(string path)
@@ -140,78 +109,60 @@ namespace gotailsOS
             return path.Replace('\\', '/');
         }
 
+        // Resolve a path to an absolute VFS path. Returns paths like "0:\\" (root) or "0:\\dir\\file.txt" (no trailing slash for files).
         private static string Resolve(string path)
         {
-            // Convert user-friendly "/" to proper "\" for VFS
-            path = NormalizeInputPath(path);
-
             if (string.IsNullOrWhiteSpace(path))
                 return CurrentDirectory;
 
-            string fullPath;
+            path = NormalizeInputPath(path);
 
-            // Absolute drive path: 0:\, 1:\, etc.
-            if (path.Length >= 3 && path[1] == ':' && path[2] == '\\')
+            // Helper to normalize segments while preserving drive
+            string NormalizeSegments(string full)
             {
-                fullPath = path;
-                Console.WriteLine(fullPath);
-            }
-            // Absolute on current drive: \folder\file
-            else if (path.StartsWith("\\"))
-            {
-                string drive = CurrentDirectory.Split(':')[0];
-                fullPath = drive + ":" + path;
-                if (VFSManager.IsValidDriveId(drive))
-                {
-                    fullPath = drive + ":" + path;
-                }
-                else
-                {
-                    Console.WriteLine("Invalid drive letter");
-                    throw new Exception("Invalid drive letter");
-                }
-            }
-            // Relative path
-            else
-            {
-                fullPath = CurrentDirectory;
-                if (!fullPath.EndsWith("\\"))
-                    fullPath += "\\";
-                fullPath += path;
-            }
+                var parts = full.Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length == 0)
+                    return CurrentDirectory;
 
-            // Normalize . and ..
-            var segments = fullPath.Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
-            var stack = new Stack<string>();
+                var stack = new Stack<string>();
+                // first part should be drive like "0:" or "C:"
+                stack.Push(parts[0]);
 
-            // Keep the drive letter as first element
-            stack.Push(segments[0]);
+                for (int i = 1; i < parts.Length; i++)
+                {
+                    var seg = parts[i];
+                    if (seg == ".") continue;
+                    if (seg == "..")
+                    {
+                        if (stack.Count > 1) stack.Pop();
+                        continue;
+                    }
+                    stack.Push(seg);
+                }
 
-            for (int i = 1; i < segments.Length; i++)
-            {
-                if (segments[i] == ".")
-                {
-                    // Current directory → do nothing
-                    continue;
-                }
-                else if (segments[i] == "..")
-                {
-                    // Parent directory → pop last if not the drive
-                    if (stack.Count > 1)
-                        stack.Pop();
-                }
-                else
-                {
-                    stack.Push(segments[i]);
-                }
+                var arr = stack.Reverse().ToArray();
+                if (arr.Length == 1)
+                    return arr[0] + "\\"; // drive root
+                return arr[0] + "\\" + string.Join("\\", arr.Skip(1));
             }
 
-            // Rebuild path with trailing \
-            var normalizedSegments = stack.Reverse().ToArray();
-            string normalized = string.Join("\\", normalizedSegments) + "\\";
-            Console.WriteLine(normalized);
+            // Absolute with explicit drive: e.g. "0:\\foo"
+            if (path.Length >= 2 && path[1] == ':')
+            {
+                return NormalizeSegments(path);
+            }
 
-            return normalized;
+            // Absolute on current drive (starts with "\\") => prepend current drive
+            if (path.StartsWith("\\"))
+            {
+                var drive = CurrentDirectory.Length >= 2 ? CurrentDirectory.Substring(0, 1) : "0";
+                return NormalizeSegments(drive + ":" + path);
+            }
+
+            // Relative -> combine with current directory (CurrentDirectory expected to be directory, may end with \
+            var baseDir = CurrentDirectory;
+            if (!baseDir.EndsWith("\\")) baseDir += "\\";
+            return NormalizeSegments(baseDir + path);
         }
 
         //-------------------------------------------------------------------------------------------------------
@@ -279,7 +230,7 @@ namespace gotailsOS
             return normalized;
         }
 
-        private static void CmdCD(string[] args, CosmosVFS vfs)
+        private static void CmdCD(string[] args)
         {
             if (args.Length == 0)
             {
@@ -288,41 +239,67 @@ namespace gotailsOS
             }
 
             string target = Resolve(args[0]);
-            string oldCurDir = CurrentDirectory;
             try
             {
-                var dir = vfs.GetDirectory(target);
-                CurrentDirectory = dir.mFullPath.EndsWith("\\") ? dir.mFullPath : dir.mFullPath + "\\"; // TODO: rework this
-                CurrentDirectory = NormalizePath(CurrentDirectory, oldCurDir);
-                //Console.WriteLine("target: " + target);
+                if (Directory.Exists(target))
+                {
+                    CurrentDirectory = target.EndsWith("\\") ? target : target + "\\";
+                }
+                else
+                {
+                    Console.WriteLine("cd: no such directory");
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                Console.WriteLine("cd: no such directory");
-                CurrentDirectory = oldCurDir;
+                Console.WriteLine("cd: error - " + ex.Message);
             }
         }
 
-        private static void CmdLS(string[] args, CosmosVFS vfs)
+        private static void CmdLS(string[] args)
         {
             string target = args.Length > 0 ? Resolve(args[0]) : CurrentDirectory;
 
             try
             {
-                var listing = vfs.GetDirectoryListing(target);
-                foreach (var entry in listing)
+                if (!Directory.Exists(target))
                 {
-                    bool isDir = entry.mEntryType == DirectoryEntryTypeEnum.Directory;
-                    Console.WriteLine(entry.mName + (isDir ? "\\" : ""));
+                    Console.WriteLine("ls: cannot access '" + target + "'");
+                    return;
                 }
+
+                // List directories
+                try
+                {
+                    var dirs = Directory.GetDirectories(target);
+                    foreach (var dir in dirs)
+                    {
+                        var name = Path.GetFileName(dir);
+                        Console.WriteLine(name + "\\");
+                    }
+                }
+                catch { }
+
+                // List files
+                try
+                {
+                    var files = Directory.GetFiles(target);
+                    foreach (var file in files)
+                    {
+                        var name = Path.GetFileName(file);
+                        Console.WriteLine(name);
+                    }
+                }
+                catch { }
             }
-            catch
+            catch (Exception ex)
             {
                 Console.WriteLine("ls: cannot access '" + target + "'");
+                Console.WriteLine("Exception: " + ex.Message);
             }
         }
 
-        private static void CmdMKDir(string[] args, CosmosVFS vfs)
+        private static void CmdMKDir(string[] args)
         {
             if (args.Length == 0)
             {
@@ -333,15 +310,15 @@ namespace gotailsOS
             string path = Resolve(args[0]);
             try
             {
-                vfs.CreateDirectory(path);
+                Directory.CreateDirectory(path);
             }
-            catch
+            catch (Exception ex)
             {
-                Console.WriteLine("mkdir: cannot create '" + args[0] + "'");
+                Console.WriteLine("mkdir: cannot create '" + args[0] + "': " + ex.Message);
             }
         }
 
-        private static void CmdTouch(string[] args, CosmosVFS vfs)
+        private static void CmdTouch(string[] args)
         {
             if (args.Length == 0)
             {
@@ -352,15 +329,18 @@ namespace gotailsOS
             string path = Resolve(args[0]);
             try
             {
-                vfs.CreateFile(path);
+                if (!File.Exists(path))
+                {
+                    File.Create(path).Close();
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                Console.WriteLine("touch: cannot create '" + args[0] + "'");
+                Console.WriteLine("touch: cannot create '" + args[0] + "': " + ex.Message);
             }
         }
 
-        private static void CmdRM(string[] args, CosmosVFS vfs)
+        private static void CmdRM(string[] args)
         {
             if (args.Length == 0)
             {
@@ -372,46 +352,22 @@ namespace gotailsOS
 
             try
             {
-                if (FileExists(vfs, path))
+                if (File.Exists(path))
                 {
-                    var fileEntry = vfs.GetFile(path);
-                    vfs.DeleteFile(fileEntry);
+                    File.Delete(path);
                 }
-                else if (DirectoryExists(vfs, path))
+                else if (Directory.Exists(path))
                 {
-                    DeleteDirectoryRecursive(vfs, vfs.GetDirectory(path));
+                    Directory.Delete(path, true);  // recursive delete
                 }
                 else
                 {
                     Console.WriteLine("rm: no such file or directory");
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Console.WriteLine("rm: error - " + e.Message);
-            }
-        }
-
-        //-------------------------------------------------------------------------------------------------------
-        // Recursive delete
-        //-------------------------------------------------------------------------------------------------------
-        private static void DeleteDirectoryRecursive(CosmosVFS vfs, DirectoryEntry dir)
-        {
-            try
-            {
-                var listing = vfs.GetDirectoryListing(dir);
-                foreach (var entry in listing)
-                {
-                    if (entry.mEntryType == DirectoryEntryTypeEnum.Directory)
-                        DeleteDirectoryRecursive(vfs, entry);
-                    else
-                        vfs.DeleteFile(entry);
-                }
-                vfs.DeleteDirectory(dir);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("rm: error deleting directory '" + dir.mFullPath + "' - " + e.Message);
+                Console.WriteLine("rm: error - " + ex.Message);
             }
         }
     }

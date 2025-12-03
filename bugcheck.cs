@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using Sys = Cosmos.System;
 
-namespace GoTailsOS
+namespace gotailsos
 {
     public static class BugCheck
     {
@@ -30,7 +30,7 @@ namespace GoTailsOS
               ..:----::-----::.               
                   ..::::::";
 
-            Console.WriteLine(sadFace); 
+            Console.WriteLine(sadFace);
 
             // Display exception info
             Console.WriteLine("\nA Unhandled Exception Occurred!\n");
