@@ -60,7 +60,7 @@ namespace gotailsos
                                 foreach (var part in p.Partitions)
                                 {
                                     Console.WriteLine("  Checking partition " + (p.Partitions.IndexOf(part) + 1) + " of " + p.Partitions.Count);
-                                    if (part.MountedFS.TotalFreeSpace == part.MountedFS.TotalFreeSpace) // drive is empty, most likely install CD and im running out of ideas because writing and reading files raises a Cosmos CPU Exception and i cant catch
+                                    if (VFSManager.FileExists(part.MountedFS.RootPath + "boot\\gotailsos.bin.gz"))
                                     {
                                         Console.WriteLine("Source device found: " + part.MountedFS.RootPath);
                                         rootpath = part.MountedFS.RootPath;
