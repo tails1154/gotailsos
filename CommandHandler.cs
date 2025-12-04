@@ -15,14 +15,8 @@ namespace gotailsos
     {
         public static string CurrentDirectory = "0:\\";
         static CosmosVFS fs;
-        public static void handleCommand(string command)
+        public static void handleCommand(string command, CosmosVFS fs)
         {
-            try
-            {
-                fs = new CosmosVFS();
-                Sys.FileSystem.VFS.VFSManager.RegisterVFS(fs);
-            }
-            catch { }
             if (string.IsNullOrWhiteSpace(command)) return;
             string[] parts = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             string cmd = parts[0].ToLower();

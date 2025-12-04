@@ -35,6 +35,11 @@ namespace gotailsos
 
                 //     // Console.WriteLine("Device: " + device.Model);
                 // }
+                Console.WriteLine("[ ... ] Initializing VFS");
+                fs = new CosmosVFS();
+                Sys.FileSystem.VFS.VFSManager.RegisterVFS(fs);
+                Console.WriteLine("[ OK ] VFS Initialized");
+                Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine("Welcome to GoTailsOS!");
                 Console.ForegroundColor = ConsoleColor.White;
@@ -53,7 +58,7 @@ namespace gotailsos
                 Console.Write("GoTailsOS " + CommandHandler.DisplayPath(CommandHandler.CurrentDirectory) + " >");
                 string input = Console.ReadLine();
 
-                CommandHandler.handleCommand(input);
+                CommandHandler.handleCommand(input, fs);
             }
             catch (Exception ex)
             {
