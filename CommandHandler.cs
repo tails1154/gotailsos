@@ -82,6 +82,9 @@ namespace gotailsos
                 case "shutdown":
                     Sys.Power.Shutdown();
                     break;
+                case "filetest":
+                    File.Create("0:\\filetest.txt").Close();
+                    break;
 
                 default:
                     Console.WriteLine("Unknown command: " + cmd);

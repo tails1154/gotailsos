@@ -7,6 +7,7 @@ using gotailsos;
 
 namespace gotailsos
 {
+    using System.IO;
     using Cosmos.HAL.BlockDevice;
     using Cosmos.System.FileSystem;
     using Cosmos.System.FileSystem.VFS;
@@ -41,6 +42,14 @@ namespace gotailsos
                 Console.WriteLine("[ OK ] VFS Initialized");
                 Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine();
+                Console.WriteLine("[ ... ] File Test");
+                File.Create("0:\\filetest.txt").Close();
+                if (File.Exists("0:\\filetest.txt"))
+                {
+                    Console.WriteLine("[ OK ] File Test Passed");
+                    File.Delete("0:\\filetest.txt");
+                }
                 Console.WriteLine("Welcome to GoTailsOS!");
                 Console.ForegroundColor = ConsoleColor.White;
             }
