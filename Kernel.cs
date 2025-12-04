@@ -58,7 +58,7 @@ namespace gotailsos
                 Console.Write("GoTailsOS " + CommandHandler.DisplayPath(CommandHandler.CurrentDirectory) + " >");
                 string input = Console.ReadLine();
 
-                CommandHandler.handleCommand(input, fs);
+                CommandHandler.handleCommand(input, ref fs);
             }
             catch (Exception ex)
             {

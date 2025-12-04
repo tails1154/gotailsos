@@ -14,8 +14,8 @@ namespace gotailsos
     public static class CommandHandler
     {
         public static string CurrentDirectory = "0:\\";
-        static CosmosVFS fs;
-        public static void handleCommand(string command, CosmosVFS fs)
+
+        public static void handleCommand(string command, ref CosmosVFS fs)
         {
             if (string.IsNullOrWhiteSpace(command)) return;
             string[] parts = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -64,7 +64,7 @@ namespace gotailsos
                     fdisk.CmdFDiskInteractive(args);
                     break;
                 case "install":
-                    InstallWizard.StartInstallWizard(fs);
+                    InstallWizard.StartInstallWizard(ref fs);
                     break;
                 case "textedit":
                     if (args.Length == 0)
@@ -345,6 +345,7 @@ namespace gotailsos
             {
                 if (!VFSManager.FileExists(path))
                 {
+                    File.Create(path).Close();
                 }
                 else
                 {

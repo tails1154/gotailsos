@@ -14,7 +14,7 @@ namespace gotailsos
 {
     class InstallWizard
     {
-        public static void StartInstallWizard(CosmosVFS vfs)
+        public static void StartInstallWizard(ref CosmosVFS vfs)
         {
             Console.Clear();
             Console.BackgroundColor = ConsoleColor.Blue;
