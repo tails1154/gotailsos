@@ -35,7 +35,7 @@ namespace gotailsos
             // Display exception info
             Console.WriteLine("\nA Unhandled Exception Occurred!\n");
             Console.WriteLine("Message: " + ex.Message + "\n");
-            Console.WriteLine("Exception Type: " + ex.GetType().FullName + "\n");
+            // Console.WriteLine("Exception Type: " + ex.GetType().FullName + "\n");
 
 
             if (ex.InnerException != null)
@@ -44,7 +44,20 @@ namespace gotailsos
             }
 
             Console.WriteLine("Press any key to reboot...");
-            Console.ReadKey();
+            Console.WriteLine("The system is probably unstable, but if you want to continue anyways, press 'C'.");
+            var key = Console.ReadKey(true);
+            if (key.Key == ConsoleKey.C)
+            {
+                Console.Clear();
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("Continuing execution in 5 seconds...");
+                System.Threading.Thread.Sleep(5000);
+                Console.Clear();
+                Console.ResetColor();
+                Console.WriteLine("Resuming execution...");
+                return; // continue execution
+            }
 
             // Optional: reboot Cosmos OS
             // Sys.Power.Reboot();

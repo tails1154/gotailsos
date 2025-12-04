@@ -1,7 +1,7 @@
 using System;
 using Sys = Cosmos.System;
 using System.Collections.Generic;  // for Stack<T>
-//using System.Linq; Linq doesnt work
+using System.Linq;
 using System.IO;
 using gotailsos;
 using Cosmos.System.FileSystem;
@@ -50,16 +50,17 @@ namespace gotailsos
                             Console.WriteLine("================");
                             Console.ResetColor();
                             Console.BackgroundColor = ConsoleColor.Blue;
-                            Console.WriteLine("Finding source device");
+                            Console.WriteLine("Setup is finding the gotailsos setup files");
                             string rootpath = null;
                             foreach (var device in BlockDevice.Devices)
                             {
                                 Console.WriteLine("Checking device " + (BlockDevice.Devices.IndexOf(device) + 1) + " of " + BlockDevice.Devices.Count);
                                 Disk p = new Disk(device);
+                                p.Mount();
                                 foreach (var part in p.Partitions)
                                 {
                                     Console.WriteLine("  Checking partition " + (p.Partitions.IndexOf(part) + 1) + " of " + p.Partitions.Count);
-                                    if (part.HasFileSystem && VFSManager.FileExists(part.MountedFS.RootPath + "boot\\gotailsos.bin.gz"))
+                                    if (part.MountedFS.TotalFreeSpace == part.MountedFS.TotalFreeSpace) // drive is empty, most likely install CD and im running out of ideas because writing and reading files raises a Cosmos CPU Exception and i cant catch
                                     {
                                         Console.WriteLine("Source device found: " + part.MountedFS.RootPath);
                                         rootpath = part.MountedFS.RootPath;
@@ -68,7 +69,7 @@ namespace gotailsos
                             }
                             if (rootpath == null)
                             {
-                                System.Threading.Thread.Sleep(2000); // sleep a bit so i can read the output
+                                //System.Threading.Thread.Sleep(2000); // sleep a bit so i can read the output
                                 Console.Clear();
                                 Console.BackgroundColor = ConsoleColor.Blue;
                                 Console.ForegroundColor = ConsoleColor.DarkCyan;
