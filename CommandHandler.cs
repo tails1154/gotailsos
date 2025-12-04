@@ -352,6 +352,11 @@ namespace gotailsos
                 if (!VFSManager.FileExists(path))
                 {
                 }
+                else
+                {
+                    Console.WriteLine("touch: cannot create '" + args[0] + "': File already exists");
+                    return;
+                }
             }
             catch (Exception ex)
             {

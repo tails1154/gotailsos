@@ -59,7 +59,7 @@ namespace gotailsos
                                 foreach (var part in p.Partitions)
                                 {
                                     Console.WriteLine("  Checking partition " + (p.Partitions.IndexOf(part) + 1) + " of " + p.Partitions.Count);
-                                    if (part.HasFileSystem && part.MountedFS.Label == "ISOIMAGE")
+                                    if (part.HasFileSystem && VFSManager.FileExists(part.MountedFS.RootPath + "boot\\gotailsos.bin.gz"))
                                     {
                                         Console.WriteLine("Source device found: " + part.MountedFS.RootPath);
                                         rootpath = part.MountedFS.RootPath;
@@ -68,6 +68,7 @@ namespace gotailsos
                             }
                             if (rootpath == null)
                             {
+                                System.Threading.Thread.Sleep(2000); // sleep a bit so i can read the output
                                 Console.Clear();
                                 Console.BackgroundColor = ConsoleColor.Blue;
                                 Console.ForegroundColor = ConsoleColor.DarkCyan;
@@ -86,20 +87,23 @@ namespace gotailsos
                             Console.WriteLine("gotailsos Setup");
                             Console.WriteLine("================");
                             Console.ForegroundColor = ConsoleColor.White;
-                            Console.WriteLine("Where would you like to install gotailsOS?");
-                            Console.WriteLine("Use your arrow keys to navigate and press ENTER to select a partition:");
+                            Console.WriteLine("Finding partitions to install to...");
                             int selectedIndex = 0;
                             List<string> partitions = new List<string>();
                             BlockDevice targetDevice = null;
                             foreach (var device in BlockDevice.Devices)
                             {
+                                Console.WriteLine("Checking device " + (BlockDevice.Devices.IndexOf(device) + 1) + " of " + BlockDevice.Devices.Count);
                                 Disk p = new Disk(device);
                                 foreach (var part in p.Partitions)
                                 {
                                     partitions.Add(part.MountedFS.RootPath + " - " + part.MountedFS.Label + " - " + part.MountedFS.Size + " bytes");
+                                    Console.WriteLine("  Found partition: " + part.MountedFS.RootPath);
 
                                 }
                             }
+                            System.Threading.Thread.Sleep(500); // sleep a bit so i can read the output
+
 
                             while (true)
                             {
@@ -110,7 +114,7 @@ namespace gotailsos
                                 Console.WriteLine("================");
                                 Console.ForegroundColor = ConsoleColor.White;
                                 Console.WriteLine("Where would you like to install gotailsOS?");
-                                Console.WriteLine("Use your arrow keys to navigate and press ENTER to select a partition:");
+                                Console.WriteLine("Enter your choice and press ENTER:");
                                 Console.WriteLine();
 
                                 for (int i = 0; i < partitions.Count; i++)
@@ -124,30 +128,30 @@ namespace gotailsos
                                     Console.BackgroundColor = ConsoleColor.Blue;
                                     Console.ForegroundColor = ConsoleColor.White;
                                 }
-
                                 var key2 = Console.ReadKey(true);
-                                if (key2.Key == ConsoleKey.DownArrow)
-                                {
-                                    selectedIndex = (selectedIndex + 1) % partitions.Count;
-                                }
-                                else if (key2.Key == ConsoleKey.UpArrow)
+                                if (key2.Key == ConsoleKey.UpArrow)
                                 {
                                     selectedIndex = (selectedIndex - 1 + partitions.Count) % partitions.Count;
+
+                                }
+                                else if (key2.Key == ConsoleKey.DownArrow)
+                                {
+                                    selectedIndex = (selectedIndex + 1) % partitions.Count;
                                 }
                                 else if (key2.Key == ConsoleKey.Enter)
                                 {
                                     // Find the selected partition's BlockDevice
-                                    int currentIndex = 0;
+                                    int count = 0;
                                     foreach (var device in BlockDevice.Devices)
                                     {
                                         Disk p = new Disk(device);
                                         foreach (var part in p.Partitions)
                                         {
-                                            if (currentIndex == selectedIndex)
+                                            if (count == selectedIndex)
                                             {
                                                 targetDevice = device;
                                             }
-                                            currentIndex++;
+                                            count++;
                                         }
                                     }
                                     break;
